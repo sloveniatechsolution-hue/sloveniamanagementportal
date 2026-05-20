@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, CalendarCheck, Settings, Zap, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarCheck, Settings, Zap, LogOut, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useStore } from '@/lib/store';
@@ -21,12 +21,14 @@ export function Sidebar() {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Operators', href: '/operators', icon: Users },
     { name: 'Attendance & Work', href: '/attendance', icon: CalendarCheck },
+    { name: 'Payments', href: '/payments', icon: CreditCard },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
   const operatorNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'My Attendance', href: '/attendance', icon: CalendarCheck },
+    { name: 'Payments & Receipts', href: '/payments', icon: CreditCard },
     { name: 'My Profile', href: '/profile', icon: Users },
   ];
 

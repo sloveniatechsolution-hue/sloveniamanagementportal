@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { Save, Calendar as CalendarIcon, User, Zap } from 'lucide-react';
 import { format } from 'date-fns';
@@ -8,8 +8,16 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
 export default function AttendancePage() {
-  const { operators, attendance, addAttendance, updateAttendance, currentUser } = useStore();
+  const { operators, attendance, fetchOperators, fetchAttendance, saveAttendance, currentUser } = useStore();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    fetchOperators();
+  }, [fetchOperators]);
+
+  useEffect(() => {
+    fetchAttendance(selectedDate);
+  }, [selectedDate, fetchAttendance]);
 
   if (!currentUser) return null;
 
@@ -30,8 +38,8 @@ export default function AttendancePage() {
 
   const [formData, setFormData] = useState<Record<string, { status: 'Present' | 'Absent' | 'Leave'; metersAssembled: number }>>({});
 
-  // Initialize form data when date changes
-  useMemo(() => {
+  // Initialize form data when date changes or records load
+  useEffect(() => {
     const initialData: Record<string, { status: 'Present' | 'Absent' | 'Leave'; metersAssembled: number }> = {};
     visibleOperators.forEach(op => {
       const record = todaysRecords.find(r => r.operatorId === op.id);
@@ -67,37 +75,19 @@ export default function AttendancePage() {
     }));
   };
 
-  const handleSaveAll = () => {
-    let savedCount = 0;
-    Object.entries(formData).forEach(([operatorId, data]) => {
-      const existingRecord = todaysRecords.find(r => r.operatorId === operatorId);
-      
-      if (existingRecord) {
-        // Only update if changed
-        if (existingRecord.status !== data.status || existingRecord.metersAssembled !== data.metersAssembled) {
-          updateAttendance(existingRecord.id, {
-            status: data.status,
-            metersAssembled: data.metersAssembled
-          });
-          savedCount++;
-        }
-      } else {
-        // Add new record
-        addAttendance({
-          id: Math.random().toString(36).substr(2, 9),
-          date: selectedDate,
-          operatorId,
-          status: data.status,
-          metersAssembled: data.metersAssembled
-        });
-        savedCount++;
-      }
-    });
+  const handleSaveAll = async () => {
+    const recordsToSave = Object.entries(formData).map(([operatorId, data]) => ({
+      date: selectedDate,
+      operatorId,
+      status: data.status,
+      metersAssembled: data.metersAssembled
+    }));
 
-    if (savedCount > 0) {
+    try {
+      await saveAttendance(recordsToSave);
       toast.success(`Successfully saved records for ${format(new Date(selectedDate), 'MMMM d, yyyy')}`);
-    } else {
-      toast('No changes to save', { icon: 'ℹ️' });
+    } catch (error) {
+      toast.error('Failed to save attendance records.');
     }
   };
 
@@ -124,7 +114,7 @@ export default function AttendancePage() {
               value={selectedDate}
               max={new Date().toISOString().split('T')[0]}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="block w-full rounded-lg border-0 py-2 pl-10 pr-4 text-neutral-900 ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6    :ring-blue-500"
+              className="block w-full rounded-lg border-0 py-2 pl-10 pr-4 text-neutral-900 ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
             />
           </div>
           <button
@@ -155,7 +145,7 @@ export default function AttendancePage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="hover:bg-neutral-50 :bg-neutral-900/50 transition-colors"
+                  className="hover:bg-neutral-50 transition-colors"
                 >
                   <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm">
                     <div className="flex items-center gap-3">
@@ -182,7 +172,7 @@ export default function AttendancePage() {
                               ? status === 'Present' ? 'bg-emerald-500 text-white shadow-sm' :
                                 status === 'Absent' ? 'bg-red-500 text-white shadow-sm' :
                                 'bg-amber-500 text-white shadow-sm'
-                              : 'text-neutral-500 hover:text-neutral-900  :text-white hover:bg-neutral-200 :bg-neutral-800'
+                              : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200'
                           } ${!isAdmin && rowData.status !== status ? 'opacity-50 cursor-not-allowed' : ''} ${!isAdmin ? 'cursor-default' : ''}`}
                         >
                           {status}
@@ -203,8 +193,8 @@ export default function AttendancePage() {
                         onChange={(e) => handleMetersChange(operator.id, e.target.value)}
                         className={`block w-full rounded-lg border-0 py-2 pl-9 pr-3 sm:text-sm sm:leading-6 ring-1 ring-inset focus:ring-2 focus:ring-inset ${
                           rowData.status === 'Present' 
-                            ? 'text-neutral-900 ring-neutral-300 focus:ring-blue-600   ' 
-                            : 'text-neutral-400 bg-neutral-100 ring-transparent   cursor-not-allowed'
+                            ? 'text-neutral-900 ring-neutral-300 focus:ring-blue-600' 
+                            : 'text-neutral-400 bg-neutral-100 ring-transparent cursor-not-allowed'
                         }`}
                       />
                     </div>

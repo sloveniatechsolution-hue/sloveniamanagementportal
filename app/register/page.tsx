@@ -1,50 +1,57 @@
 'use client';
 
 import { useState } from 'react';
-import { useStore } from '@/lib/store';
-import { Building2, ShieldCheck, Mail, Phone, Lock, CheckCircle2, FileText, Copy, ArrowRight } from 'lucide-react';
+import { Building2, ShieldCheck, Mail, Phone, Lock, CheckCircle2, Copy, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
 export default function RegisterPage() {
-  const { addOperator } = useStore();
   const router = useRouter();
   
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    slovenianId: '',
     password: '',
   });
 
   const [consent, setConsent] = useState(false);
   const [registeredId, setRegisteredId] = useState<string | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!consent) {
       toast.error('Please accept the data privacy consent to continue.');
       return;
     }
-    
-    const generatedId = 'OP' + Math.floor(1000 + Math.random() * 9000); // 4 digit random for OP
-    
-    addOperator({
-      id: generatedId,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      slovenianId: formData.slovenianId,
-      joinDate: new Date().toISOString().split('T')[0],
-      status: 'Active',
-      password: formData.password,
-    });
 
-    setRegisteredId(generatedId);
-    toast.success('Profile created successfully!');
+    setIsRegistering(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRegisteredId(data.operator.id);
+        toast.success('Profile created successfully!');
+      } else {
+        toast.error(data.message || 'Registration failed.');
+      }
+    } catch (error) {
+      toast.error('An error occurred during registration.');
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   const copyToClipboard = () => {
@@ -137,7 +144,7 @@ export default function RegisterPage() {
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8 text-left flex gap-3">
                 <ShieldCheck className="h-5 w-5 text-blue-600 shrink-0" />
                 <p className="text-sm text-blue-800">
-                  Keep this ID safe! Once you log in, please go to <strong>My Profile</strong> to securely add your bank details for payroll.
+                  Keep this ID safe! Once you log in, please go to <strong>My Profile</strong> to securely verify your Slovenian ID card and bank details for payroll.
                 </p>
               </div>
 
@@ -153,14 +160,14 @@ export default function RegisterPage() {
               <div className="text-center lg:text-left mb-10">
                 <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Operator Onboarding</h2>
                 <p className="mt-2 text-sm text-gray-500">
-                  Please enter your valid details for HR validation.
+                  Please enter your details to create your operator profile.
                 </p>
               </div>
 
               <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-start gap-3">
                 <ShieldCheck className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
                 <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                  These details are taken for validation only and are completely end-to-end encrypted. Your privacy is our top priority.
+                  These details are taken for verification only and are completely end-to-end encrypted. Your privacy is our top priority.
                 </p>
               </div>
 
@@ -194,16 +201,6 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="pt-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Slovenian National ID</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <input required type="text" value={formData.slovenianId} onChange={(e) => setFormData({ ...formData, slovenianId: e.target.value })} placeholder="Enter your ID number" className="block w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all sm:text-sm" />
-                  </div>
-                </div>
-
-                <div className="pt-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Set Login Password</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -225,16 +222,17 @@ export default function RegisterPage() {
                       />
                     </div>
                     <label htmlFor="consent" className="ml-3 text-xs text-gray-500 leading-tight">
-                      I consent to <strong className="text-gray-700">Shanghai Yisu Information Technology Co., Ltd.</strong> securely processing my information. (Bank details will be collected later in your profile).
+                      I consent to <strong className="text-gray-700">Shanghai Yisu Information Technology Co., Ltd.</strong> securely processing my information under GDPR guidelines.
                     </label>
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-blue-700 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-all active:scale-[0.98]"
+                  disabled={isRegistering}
+                  className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-blue-700 hover:bg-blue-600 disabled:bg-neutral-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-all active:scale-[0.98]"
                 >
-                  Complete Registration
+                  {isRegistering ? 'Processing...' : 'Complete Registration'}
                 </button>
                 
                 <div className="text-center mt-6">

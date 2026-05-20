@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store';
 import { usePathname, useRouter } from 'next/navigation';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { currentUser, operators } = useStore();
+  const { currentUser, operators, fetchOperators } = useStore();
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -13,6 +13,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Fetch operators whenever user is logged in
+  useEffect(() => {
+    if (isClient && currentUser) {
+      fetchOperators();
+    }
+  }, [currentUser, isClient, fetchOperators]);
 
   useEffect(() => {
     if (!isClient) return;
@@ -27,7 +34,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (currentUser?.role === 'operator') {
       const operator = operators.find(op => op.id === currentUser.id);
       if (operator) {
-        const missingDetails = !operator.bankDetails || !operator.idDocument;
+        const missingDetails = 
+          !operator.bankDetails || 
+          !operator.bankDetails.bankName ||
+          !operator.bankDetails.iban ||
+          !operator.slovenianId ||
+          !operator.slovenianId.serialNumber ||
+          !operator.slovenianId.emso ||
+          !operator.slovenianId.expiryDate ||
+          !operator.slovenianId.issueDate ||
+          !operator.agreementAccepted;
+        
         if (missingDetails && pathname !== '/profile') {
           router.push('/profile');
         }

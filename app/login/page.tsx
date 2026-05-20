@@ -9,13 +9,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function LoginPage() {
-  const { currentUser, setCurrentUser, operators } = useStore();
+  const { currentUser, setCurrentUser } = useStore();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   
   const [loginRole, setLoginRole] = useState<'admin' | 'operator'>('admin');
   const [operatorId, setOperatorId] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Hydration fix
   useEffect(() => {
@@ -30,30 +31,34 @@ export default function LoginPage() {
 
   if (!isClient || currentUser) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoggingIn(true);
 
-    if (loginRole === 'admin') {
-      if (password === 'admin123') {
-        setCurrentUser({ role: 'admin', id: 'admin', name: 'System Admin' });
-        toast.success('Welcome back, Admin!');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role: loginRole,
+          operatorId: operatorId,
+          password: password
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setCurrentUser(data.user);
+        toast.success(loginRole === 'admin' ? 'Welcome back, Admin!' : `Welcome, ${data.user.name}!`);
         router.push('/dashboard');
       } else {
-        toast.error('Invalid admin password');
+        toast.error(data.message || 'Invalid credentials');
       }
-    } else {
-      const operator = operators.find((op) => op.id === operatorId);
-      if (operator && operator.password === password) {
-        if (operator.status !== 'Active') {
-          toast.error('Your account is currently inactive.');
-          return;
-        }
-        setCurrentUser({ role: 'operator', id: operator.id, name: operator.name });
-        toast.success(`Welcome, ${operator.name}!`);
-        router.push('/dashboard');
-      } else {
-        toast.error('Invalid Operator ID or password');
-      }
+    } catch (err: any) {
+      toast.error('An error occurred during authentication.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -85,7 +90,7 @@ export default function LoginPage() {
               className={`w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium leading-5 transition-all ${
                 loginRole === 'admin'
                   ? 'bg-white  shadow text-neutral-900 '
-                  : 'text-neutral-500 hover:text-neutral-700 :text-neutral-300'
+                  : 'text-neutral-500 hover:text-neutral-700'
               }`}
             >
               <Shield className="h-4 w-4" /> Admin
@@ -95,7 +100,7 @@ export default function LoginPage() {
               className={`w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium leading-5 transition-all ${
                 loginRole === 'operator'
                   ? 'bg-white  shadow text-neutral-900 '
-                  : 'text-neutral-500 hover:text-neutral-700 :text-neutral-300'
+                  : 'text-neutral-500 hover:text-neutral-700'
               }`}
             >
               <User className="h-4 w-4" /> Operator
@@ -117,8 +122,8 @@ export default function LoginPage() {
                     required
                     value={operatorId}
                     onChange={(e) => setOperatorId(e.target.value)}
-                    placeholder="e.g. OP001"
-                    className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-neutral-200  rounded-xl shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent   sm:text-sm"
+                    placeholder="e.g. OP1001"
+                    className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-neutral-200  rounded-xl shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                   />
                 </div>
               </div>
@@ -138,7 +143,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={loginRole === 'admin' ? "admin123" : "Operator password"}
-                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-neutral-200  rounded-xl shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent   sm:text-sm"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-neutral-200  rounded-xl shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                 />
               </div>
             </div>
@@ -146,9 +151,10 @@ export default function LoginPage() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-colors"
+                disabled={isLoggingIn}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 transition-colors"
               >
-                Sign in
+                {isLoggingIn ? 'Logging in...' : 'Sign in'}
               </button>
             </div>
           </form>

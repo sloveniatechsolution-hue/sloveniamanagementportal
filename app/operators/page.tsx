@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore, Operator } from '@/lib/store';
-import { Plus, Search, MoreVertical, Edit2, Trash2, Mail, Phone, Calendar } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Mail, Phone, Calendar, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
 export default function OperatorsPage() {
-  const { operators, addOperator, deleteOperator, updateOperator } = useStore();
+  const { operators, fetchOperators, addOperator, deleteOperator, updateOperator, isLoading } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -21,23 +21,35 @@ export default function OperatorsPage() {
     status: 'Active' as 'Active' | 'Inactive',
   });
 
+  // Fetch operators from MongoDB on load
+  useEffect(() => {
+    fetchOperators();
+  }, [fetchOperators]);
+
   const filteredOperators = operators.filter((op) =>
-    op.name.toLowerCase().includes(searchTerm.toLowerCase())
+    op.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    op.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId) {
-      updateOperator(editingId, formData);
-      toast.success('Operator updated successfully');
+      const success = await updateOperator(editingId, formData);
+      if (success) {
+        toast.success('Operator updated successfully');
+      } else {
+        toast.error('Failed to update operator');
+      }
     } else {
-      const generatedId = 'OP' + Math.floor(100 + Math.random() * 900);
-      addOperator({
-        id: generatedId,
-        password: 'password123',
+      const newOp = await addOperator({
         ...formData,
+        password: 'password123',
       });
-      toast.success(`Operator added! ID: ${generatedId}`);
+      if (newOp) {
+        toast.success(`Operator added! ID: ${newOp.id}`);
+      } else {
+        toast.error('Failed to add operator');
+      }
     }
     setIsModalOpen(false);
     setEditingId(null);
@@ -62,7 +74,7 @@ export default function OperatorsPage() {
         <div>
           <h1 className="text-3xl font-bold text-neutral-900 ">Operators</h1>
           <p className="mt-2 text-sm text-neutral-500 ">
-            Manage your workforce in Slovenia. Add, edit, or remove operators.
+            Manage your workforce in Slovenia. Add, edit, or verify operators.
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -87,83 +99,122 @@ export default function OperatorsPage() {
           </div>
           <input
             type="text"
-            className="block w-full rounded-xl border-0 py-2.5 pl-10 pr-3 text-neutral-900 ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6    :ring-blue-500"
-            placeholder="Search operators..."
+            className="block w-full rounded-xl border-0 py-2.5 pl-10 pr-3 text-neutral-900 ring-1 ring-inset ring-neutral-300 placeholder:text-neutral-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+            placeholder="Search by name or Operator ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <AnimatePresence>
-          {filteredOperators.map((op) => (
-            <motion.div
-              key={op.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative flex flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:shadow-md  "
-            >
-              <div>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <img
-                      className="h-12 w-12 rounded-full object-cover ring-2 ring-neutral-100 "
-                      src={`https://ui-avatars.com/api/?name=${op.name.replace(' ', '+')}&background=random`}
-                      alt={op.name}
-                    />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold text-neutral-900 ">{op.name}</h3>
-                        <span className="text-xs text-neutral-400 font-mono">#{op.id}</span>
+      {isLoading && operators.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+          <p className="text-sm text-neutral-500 mt-4">Loading Slovenian operator database...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <AnimatePresence>
+            {filteredOperators.map((op) => (
+              <motion.div
+                key={op.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="relative flex flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:shadow-md"
+              >
+                <div>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <img
+                        className="h-12 w-12 rounded-full object-cover ring-2 ring-neutral-100 "
+                        src={`https://ui-avatars.com/api/?name=${op.name.replace(' ', '+')}&background=random`}
+                        alt={op.name}
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold text-neutral-900">{op.name}</h3>
+                          <span className="text-xs text-neutral-400 font-mono">#{op.id}</span>
+                        </div>
+                        <span className={cn(
+                          "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1",
+                          op.status === 'Active' ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-700"
+                        )}>
+                          {op.status}
+                        </span>
                       </div>
-                      <span className={cn(
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1",
-                        op.status === 'Active' ? "bg-emerald-50 text-emerald-700  " : "bg-neutral-100 text-neutral-700  "
-                      )}>
-                        {op.status}
-                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => openEditModal(op)} className="p-1.5 text-neutral-400 hover:text-blue-600 transition-colors">
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button onClick={async () => { await deleteOperator(op.id); toast.success('Operator deleted'); }} className="p-1.5 text-neutral-400 hover:text-red-600 transition-colors">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => openEditModal(op)} className="p-1.5 text-neutral-400 hover:text-blue-600 transition-colors">
-                      <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => { deleteOperator(op.id); toast.success('Operator deleted'); }} className="p-1.5 text-neutral-400 hover:text-red-600 transition-colors">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="mt-6 flex flex-col gap-3 text-sm text-neutral-600 ">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-neutral-400" />
-                    {op.email || 'N/A'}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-neutral-400" />
-                    {op.phone || 'N/A'}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-4 w-4 text-neutral-400" />
-                    Joined {op.joinDate}
-                  </div>
-                  {op.bankDetails && (
-                    <div className="mt-2 p-3 bg-neutral-50  rounded-lg border border-neutral-100 ">
-                      <p className="text-xs font-semibold text-neutral-900  flex items-center gap-1.5 mb-1">
-                        🏦 {op.bankDetails.bankName}
-                      </p>
-                      <p className="text-xs text-neutral-500  font-mono">
-                        {op.bankDetails.iban}
-                      </p>
+                  <div className="mt-6 flex flex-col gap-3 text-sm text-neutral-600">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-4 w-4 text-neutral-400" />
+                      {op.email || 'N/A'}
                     </div>
-                  )}
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-4 w-4 text-neutral-400" />
+                      {op.phone || 'N/A'}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-neutral-400" />
+                      Joined {op.joinDate}
+                    </div>
+
+                    {/* Bank Details section */}
+                    {op.bankDetails ? (
+                      <div className="mt-2 p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                        <p className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 mb-1">
+                          🏦 {op.bankDetails.bankName}
+                        </p>
+                        <p className="text-xs text-neutral-500 font-mono">
+                          {op.bankDetails.iban}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-2 text-xs text-amber-800 font-medium">
+                        <ShieldAlert className="h-4 w-4 text-amber-600" />
+                        No bank details added
+                      </div>
+                    )}
+
+                    {/* Slovenian ID Card details */}
+                    {op.slovenianId ? (
+                      <div className="mt-2 p-3 bg-cyan-50/50 rounded-xl border border-cyan-100">
+                        <p className="text-xs font-bold text-cyan-900 flex items-center gap-1.5 mb-2">
+                          🇸🇮 Osebna Izkaznica Verified
+                        </p>
+                        <div className="text-[11px] text-cyan-800 grid grid-cols-2 gap-x-2 gap-y-1">
+                          <div><span className="text-neutral-500 font-medium">Serial:</span> <span className="font-mono font-bold">{op.slovenianId.serialNumber}</span></div>
+                          <div><span className="text-neutral-500 font-medium">EMŠO:</span> <span className="font-mono font-bold">{op.slovenianId.emso}</span></div>
+                          <div><span className="text-neutral-500 font-medium">Issued:</span> {op.slovenianId.issueDate}</div>
+                          <div><span className="text-neutral-500 font-medium">Expiry:</span> {op.slovenianId.expiryDate}</div>
+                        </div>
+                        {op.agreementAccepted && (
+                          <div className="mt-2 pt-2 border-t border-cyan-100 text-[10px] text-green-700 font-medium flex items-center gap-1">
+                            ✓ Agreement accepted {op.agreementAcceptedAt ? `on ${new Date(op.agreementAcceptedAt).toLocaleDateString()}` : ''}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-2 text-xs text-amber-800 font-medium">
+                        <ShieldAlert className="h-4 w-4 text-amber-600" />
+                        Identity Card not verified
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Modal */}
       <AnimatePresence>
@@ -191,24 +242,24 @@ export default function OperatorsPage() {
                 <div className="p-6 space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-neutral-700  mb-1">Full Name</label>
-                    <input required type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6    :ring-blue-500" />
+                    <input required type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-neutral-700  mb-1">Email</label>
-                    <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6    :ring-blue-500" />
+                    <input required type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-neutral-700  mb-1">Phone</label>
-                    <input type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6    :ring-blue-500" />
+                    <input required type="text" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-neutral-700  mb-1">Join Date</label>
-                      <input type="date" value={formData.joinDate} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6    :ring-blue-500" />
+                      <input type="date" value={formData.joinDate} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-neutral-700  mb-1">Status</label>
-                      <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6    :ring-blue-500">
+                      <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as any })} className="w-full rounded-xl border-0 py-2.5 px-3 text-neutral-900 shadow-sm ring-1 ring-inset ring-neutral-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6">
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
                       </select>
@@ -216,7 +267,7 @@ export default function OperatorsPage() {
                   </div>
                 </div>
                 <div className="bg-neutral-50  px-6 py-4 flex justify-end gap-3 rounded-b-2xl border-t border-neutral-100 ">
-                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-neutral-700  hover:bg-neutral-100 :bg-neutral-800 rounded-lg transition-colors">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-neutral-700  hover:bg-neutral-100 rounded-lg transition-colors">
                     Cancel
                   </button>
                   <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-sm transition-colors">

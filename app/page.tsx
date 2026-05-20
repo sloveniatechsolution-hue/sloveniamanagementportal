@@ -20,28 +20,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-600 p-2.5 rounded-lg">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900 tracking-tight">Shanghai Yisu InfoTech</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link href="/login" className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
-                Log in
-              </Link>
-              <Link href="/register" className="text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-lg shadow-sm transition-all">
-                Register as Operator
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gray-50 pt-16 pb-32">
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -95,12 +73,6 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
-      
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12 text-center">
-        <p>&copy; {new Date().getFullYear()} Shanghai Yisu Information Technology Co., Ltd. All rights reserved.</p>
-        <p className="mt-2 text-sm">Strictly for authorized personnel use only.</p>
-      </footer>
     </div>
   );
 }
