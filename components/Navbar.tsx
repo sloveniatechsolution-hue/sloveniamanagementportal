@@ -3,17 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2, Zap, User, Clock, LogOut, ShieldAlert } from 'lucide-react';
+import { Building2, Zap, User, Clock, LogOut, ShieldAlert, Menu } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, setCurrentUser } = useStore();
+  const { currentUser, setCurrentUser, isSidebarOpen, setSidebarOpen } = useStore();
   const [currentDate, setCurrentDate] = useState('');
 
-  const isPublicPage = pathname === '/' || pathname === '/register' || pathname === '/login';
+  const isPublicPage = pathname === '/' || pathname === '/register' || pathname === '/login' || pathname === '/slovenian-admin-login-system';
 
   // Format date on client only to avoid hydration mismatch
   useEffect(() => {
@@ -61,9 +61,16 @@ export function Navbar() {
     return (
       <header className="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-neutral-200 bg-white/85 px-6 backdrop-blur-md">
         {/* Left Side: Breadcrumb & Title */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">SMP</span>
-          <span className="text-neutral-300">/</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(!isSidebarOpen)}
+            className="p-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 lg:hidden focus:outline-none transition-colors"
+            aria-label="Toggle navigation"
+          >
+            <Menu className="h-5.5 w-5.5" />
+          </button>
+          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider hidden sm:inline-block">SMP</span>
+          <span className="text-neutral-300 hidden sm:inline-block">/</span>
           <span className="text-sm font-semibold text-neutral-700">
             {getPageTitle(pathname)}
           </span>

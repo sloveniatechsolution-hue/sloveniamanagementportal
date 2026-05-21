@@ -155,7 +155,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Identity & Payroll Verification</h1>
         <p className="mt-2 text-sm text-neutral-500 max-w-2xl">

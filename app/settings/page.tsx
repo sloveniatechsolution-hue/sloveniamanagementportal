@@ -15,7 +15,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-neutral-900 ">Settings</h1>
         <p className="mt-2 text-sm text-neutral-500 ">
@@ -38,7 +38,7 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
               <div>
                 <p className="text-sm font-medium text-neutral-900 ">Reset Application Data</p>
                 <p className="text-sm text-neutral-500 ">

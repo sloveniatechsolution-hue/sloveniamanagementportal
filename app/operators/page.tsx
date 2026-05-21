@@ -69,7 +69,7 @@ export default function OperatorsPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="sm:flex sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-neutral-900 ">Operators</h1>

@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const { role, operatorId, password } = await request.json();
 
     if (role === 'admin') {
-      if (password === 'admin123') {
+      if (password === 'Slovenia@2026%$') {
         return NextResponse.json({
           success: true,
           user: { role: 'admin', id: 'admin', name: 'System Admin' },

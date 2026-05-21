@@ -70,6 +70,10 @@ interface AppState {
   fetchPayments: (operatorId?: string) => Promise<void>;
   addPayment: (payment: Omit<Payment, '_id' | 'createdAt'>) => Promise<any>;
   deletePayment: (id: string) => Promise<boolean>;
+
+  // Sidebar responsive state
+  isSidebarOpen: boolean;
+  setSidebarOpen: (isOpen: boolean) => void;
 }
 
 export const useStore = create<AppState>()(
@@ -80,8 +84,10 @@ export const useStore = create<AppState>()(
       attendance: [],
       payments: [],
       isLoading: false,
+      isSidebarOpen: false,
 
       setCurrentUser: (user) => set({ currentUser: user }),
+      setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
 
       fetchOperators: async () => {
         set({ isLoading: true });

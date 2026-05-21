@@ -64,7 +64,7 @@ export default function Dashboard() {
   const isTargetAchieved = operatorMetersToday >= DAILY_TARGET;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
       {/* Title */}
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>

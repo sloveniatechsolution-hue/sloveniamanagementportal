@@ -13,7 +13,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   
-  const [loginRole, setLoginRole] = useState<'admin' | 'operator'>('admin');
+  const loginRole = 'operator';
   const [operatorId, setOperatorId] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -50,7 +50,7 @@ export default function LoginPage() {
       
       if (data.success) {
         setCurrentUser(data.user);
-        toast.success(loginRole === 'admin' ? 'Welcome back, Admin!' : `Welcome, ${data.user.name}!`);
+        toast.success(`Welcome, ${data.user.name}!`);
         router.push('/dashboard');
       } else {
         toast.error(data.message || 'Invalid credentials');
@@ -84,50 +84,25 @@ export default function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white  py-8 px-4 shadow-xl shadow-black/5 border border-neutral-100  sm:rounded-2xl sm:px-10"
         >
-          <div className="flex p-1 space-x-1 bg-neutral-100  rounded-xl mb-8">
-            <button
-              onClick={() => { setLoginRole('admin'); setOperatorId(''); setPassword(''); }}
-              className={`w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium leading-5 transition-all ${
-                loginRole === 'admin'
-                  ? 'bg-white  shadow text-neutral-900 '
-                  : 'text-neutral-500 hover:text-neutral-700'
-              }`}
-            >
-              <Shield className="h-4 w-4" /> Admin
-            </button>
-            <button
-              onClick={() => { setLoginRole('operator'); setOperatorId(''); setPassword(''); }}
-              className={`w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium leading-5 transition-all ${
-                loginRole === 'operator'
-                  ? 'bg-white  shadow text-neutral-900 '
-                  : 'text-neutral-500 hover:text-neutral-700'
-              }`}
-            >
-              <User className="h-4 w-4" /> Operator
-            </button>
-          </div>
-
           <form className="space-y-6" onSubmit={handleLogin}>
-            {loginRole === 'operator' && (
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 ">
-                  Operator ID
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-neutral-400" />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={operatorId}
-                    onChange={(e) => setOperatorId(e.target.value)}
-                    placeholder="e.g. OP1001"
-                    className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-neutral-200  rounded-xl shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
-                  />
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 ">
+                Operator ID
+              </label>
+              <div className="mt-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-neutral-400" />
                 </div>
+                <input
+                  type="text"
+                  required
+                  value={operatorId}
+                  onChange={(e) => setOperatorId(e.target.value)}
+                  placeholder="e.g. OP1001"
+                  className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-neutral-200  rounded-xl shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
+                />
               </div>
-            )}
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-neutral-700 ">
@@ -142,7 +117,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={loginRole === 'admin' ? "admin123" : "Operator password"}
+                  placeholder="Operator password"
                   className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-neutral-200  rounded-xl shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                 />
               </div>
@@ -159,22 +134,14 @@ export default function LoginPage() {
             </div>
           </form>
 
-          {loginRole === 'admin' && (
-            <div className="mt-4 text-center">
-              <p className="text-xs text-neutral-500 ">Default admin password: <strong>admin123</strong></p>
-            </div>
-          )}
-
-          {loginRole === 'operator' && (
-            <div className="mt-4 text-center">
-              <p className="text-sm text-neutral-600 ">
-                New operator?{' '}
-                <Link href="/register" className="font-semibold text-blue-600 hover:text-blue-500">
-                  Register here
-                </Link>
-              </p>
-            </div>
-          )}
+          <div className="mt-4 text-center">
+            <p className="text-sm text-neutral-600 ">
+              New operator?{' '}
+              <Link href="/register" className="font-semibold text-blue-600 hover:text-blue-500">
+                Register here
+              </Link>
+            </p>
+          </div>
           
           <div className="text-center mt-6 pt-6 border-t border-neutral-100 ">
             <Link href="/" className="text-sm font-semibold text-neutral-500 hover:text-blue-600 transition-colors">

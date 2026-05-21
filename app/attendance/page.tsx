@@ -92,7 +92,7 @@ export default function AttendancePage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="sm:flex sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-neutral-900 ">
@@ -104,7 +104,7 @@ export default function AttendancePage() {
               : 'View your attendance status and log the number of meters you assembled today.'}
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 flex items-center gap-4">
+        <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-4">
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <CalendarIcon className="h-4 w-4 text-neutral-400" aria-hidden="true" />
@@ -127,7 +127,7 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm  ">
+      <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white shadow-sm">
         <table className="min-w-full divide-y divide-neutral-200 ">
           <thead className="bg-neutral-50 ">
             <tr>
