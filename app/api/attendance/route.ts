@@ -41,10 +41,17 @@ export async function POST(request: Request) {
     const savedRecords = [];
     for (const record of records) {
       const filter = { date: record.date, operatorId: record.operatorId };
-      const update = {
+      const update: any = {
         status: record.status,
         metersAssembled: record.metersAssembled,
+        shift: record.shift,
       };
+      if (record.checkInTime) {
+        update.checkInTime = record.checkInTime;
+      }
+      if (typeof record.submitted === 'boolean') {
+        update.submitted = record.submitted;
+      }
 
       const doc = await Attendance.findOneAndUpdate(
         filter,

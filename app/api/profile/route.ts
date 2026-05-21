@@ -5,10 +5,15 @@ import { Operator } from '@/lib/models';
 export async function PUT(request: Request) {
   try {
     await connectToDatabase();
-    const { operatorId, bankDetails, slovenianId, agreementAccepted } = await request.json();
+    const { operatorId, bankDetails, slovenianId, agreementAccepted, shift } = await request.json();
 
     if (!operatorId) {
       return NextResponse.json({ success: false, message: 'Operator ID is required' }, { status: 400 });
+    }
+
+    const operator = await Operator.findOne({ id: operatorId });
+    if (!operator) {
+      return NextResponse.json({ success: false, message: 'Operator not found' }, { status: 404 });
     }
 
     const updateFields: any = {};
@@ -19,6 +24,13 @@ export async function PUT(request: Request) {
       if (agreementAccepted) {
         updateFields.agreementAcceptedAt = new Date();
       }
+    }
+
+    if (shift) {
+      if (operator.shift && operator.shift !== shift) {
+        return NextResponse.json({ success: false, message: 'Shift is already locked and cannot be changed' }, { status: 400 });
+      }
+      updateFields.shift = shift;
     }
 
     const updated = await Operator.findOneAndUpdate(

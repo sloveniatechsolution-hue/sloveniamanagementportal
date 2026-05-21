@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { Building2, CreditCard, Save, FileText, CheckCircle2, ShieldCheck, HelpCircle, ArrowRight, Trash2, UploadCloud, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
+import { Building2, CreditCard, Save, FileText, CheckCircle2, ShieldCheck, HelpCircle, ArrowRight, Trash2, UploadCloud, Sparkles, RefreshCw, AlertCircle, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
@@ -18,6 +18,10 @@ export default function ProfilePage() {
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Shift selection
+  const [shift, setShift] = useState<'Day' | 'Evening' | 'Night' | ''>('');
+  const [isShiftLocked, setIsShiftLocked] = useState(false);
+
   useEffect(() => {
     if (currentUser?.role === 'operator') {
       const operator = operators.find(op => op.id === currentUser.id);
@@ -29,6 +33,12 @@ export default function ProfilePage() {
         }
         if (operator.agreementAccepted) {
           setAgreementAccepted(operator.agreementAccepted);
+        }
+        if (operator.shift) {
+          setShift(operator.shift);
+          setIsShiftLocked(true);
+        } else {
+          setIsShiftLocked(false);
         }
       }
     }
@@ -60,6 +70,11 @@ export default function ProfilePage() {
       return;
     }
 
+    if (!shift) {
+      toast.error('Please select your work shift.');
+      return;
+    }
+
     if (!agreementAccepted) {
       toast.error('You must accept the legal agreement to complete your profile verification.');
       return;
@@ -73,7 +88,8 @@ export default function ProfilePage() {
         body: JSON.stringify({
           operatorId: currentUser.id,
           bankDetails: { bankName, iban, swiftCode },
-          agreementAccepted
+          agreementAccepted,
+          shift
         })
       });
       const data = await response.json();
@@ -245,6 +261,43 @@ export default function ProfilePage() {
                       className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 placeholder-neutral-400 sm:text-sm font-mono transition-all"
                     />
                     <p className="text-[10px] text-neutral-400 mt-1">Required for direct international wire payments from India in Euros.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-700 mb-1.5 flex items-center justify-between">
+                      <span>Work Shift Selection</span>
+                      {isShiftLocked && (
+                        <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded-full font-bold">
+                          <Lock className="h-3 w-3" /> Locked
+                        </span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <select
+                        required
+                        disabled={isShiftLocked}
+                        value={shift}
+                        onChange={(e) => setShift(e.target.value as 'Day' | 'Evening' | 'Night')}
+                        className={`block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 sm:text-sm transition-all appearance-none ${isShiftLocked ? 'opacity-80 cursor-not-allowed bg-neutral-100/50' : ''}`}
+                      >
+                        <option value="" disabled>Select your shift...</option>
+                        <option value="Day">Day Shift (09:00–17:00)</option>
+                        <option value="Evening">Evening Shift (17:00–01:00)</option>
+                        <option value="Night">Night Shift (01:00–09:00)</option>
+                      </select>
+                      {!isShiftLocked && (
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-neutral-500">
+                          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-neutral-400 mt-1">
+                      {isShiftLocked 
+                        ? "Your shift is locked. Contact HR/Admin to make changes." 
+                        : "Once chosen, your work shift is locked and cannot be changed."}
+                    </p>
                   </div>
                 </div>
               </div>

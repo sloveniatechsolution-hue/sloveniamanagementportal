@@ -27,6 +27,7 @@ const OperatorSchema = new Schema({
   bankDetails: { type: BankDetailsSchema, required: false },
   agreementAccepted: { type: Boolean, default: false },
   agreementAcceptedAt: { type: Date, required: false },
+  shift: { type: String, enum: ['Day', 'Evening', 'Night'], required: false },
 }, { timestamps: true });
 
 const AttendanceSchema = new Schema({
@@ -34,6 +35,9 @@ const AttendanceSchema = new Schema({
   operatorId: { type: String, required: true },
   status: { type: String, enum: ['Present', 'Absent', 'Leave'], required: true },
   metersAssembled: { type: Number, default: 0 },
+  shift: { type: String, enum: ['Day', 'Evening', 'Night'], default: 'Day' },
+  checkInTime: { type: String, required: false },
+  submitted: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // Avoid compiling model if it already exists

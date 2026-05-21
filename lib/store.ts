@@ -26,6 +26,7 @@ export type Operator = {
   };
   agreementAccepted?: boolean;
   agreementAcceptedAt?: string;
+  shift?: 'Day' | 'Evening' | 'Night';
 };
 
 export type AttendanceRecord = {
@@ -34,6 +35,9 @@ export type AttendanceRecord = {
   operatorId: string;
   status: 'Present' | 'Absent' | 'Leave';
   metersAssembled: number;
+  shift?: 'Day' | 'Evening' | 'Night';
+  checkInTime?: string;
+  submitted?: boolean;
 };
 
 export type Payment = {
@@ -68,7 +72,7 @@ interface AppState {
   updateOperator: (id: string, operator: Partial<Operator>) => Promise<any>;
   deleteOperator: (id: string) => Promise<void>;
   saveAttendance: (records: Omit<AttendanceRecord, 'id'>[]) => Promise<void>;
-  
+
   // Payment actions
   fetchPayments: (operatorId?: string) => Promise<void>;
   addPayment: (payment: Omit<Payment, '_id' | 'createdAt'>) => Promise<any>;

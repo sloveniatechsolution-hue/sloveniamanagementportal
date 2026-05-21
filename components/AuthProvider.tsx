@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isClient) return;
     
-    const isPublicPage = pathname === '/' || pathname === '/register' || pathname === '/login';
+    const isPublicPage = pathname === '/' || pathname === '/register' || pathname === '/login' || pathname === '/slovenian-admin-login-system';
     
     if (!currentUser && !isPublicPage) {
       router.push('/login');
@@ -39,7 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           !operator.bankDetails.bankName ||
           !operator.bankDetails.iban ||
           !operator.bankDetails.swiftCode ||
-          !operator.agreementAccepted;
+          !operator.agreementAccepted ||
+          !operator.shift;
         
         if (missingDetails && pathname !== '/profile') {
           router.push('/profile');
@@ -50,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   if (!isClient) return null; // Prevent hydration mismatch
 
-  const isPublicPage = pathname === '/' || pathname === '/register' || pathname === '/login';
+  const isPublicPage = pathname === '/' || pathname === '/register' || pathname === '/login' || pathname === '/slovenian-admin-login-system';
 
   if (currentUser || isPublicPage) {
     return <>{children}</>;
