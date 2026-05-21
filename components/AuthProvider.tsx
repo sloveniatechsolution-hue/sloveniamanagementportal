@@ -38,11 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           !operator.bankDetails || 
           !operator.bankDetails.bankName ||
           !operator.bankDetails.iban ||
-          !operator.slovenianId ||
-          !operator.slovenianId.serialNumber ||
-          !operator.slovenianId.emso ||
-          !operator.slovenianId.expiryDate ||
-          !operator.slovenianId.issueDate ||
+          !operator.bankDetails.swiftCode ||
           !operator.agreementAccepted;
         
         if (missingDetails && pathname !== '/profile') {

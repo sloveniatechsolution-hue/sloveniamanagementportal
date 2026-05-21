@@ -12,7 +12,7 @@ export default function OperatorsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -169,43 +169,28 @@ export default function OperatorsPage() {
 
                     {/* Bank Details section */}
                     {op.bankDetails ? (
-                      <div className="mt-2 p-3 bg-neutral-50 rounded-xl border border-neutral-100">
+                      <div className="mt-2 p-3 bg-neutral-50 rounded-xl border border-neutral-100 space-y-1">
                         <p className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 mb-1">
                           🏦 {op.bankDetails.bankName}
                         </p>
-                        <p className="text-xs text-neutral-500 font-mono">
-                          {op.bankDetails.iban}
+                        <p className="text-xs text-neutral-600 font-mono">
+                          <span className="text-neutral-400 font-sans font-medium text-[10px]">IBAN:</span> {op.bankDetails.iban}
                         </p>
+                        {op.bankDetails.swiftCode && (
+                          <p className="text-xs text-neutral-600 font-mono">
+                            <span className="text-neutral-400 font-sans font-medium text-[10px]">SWIFT/BIC:</span> {op.bankDetails.swiftCode}
+                          </p>
+                        )}
+                        {op.agreementAccepted && (
+                          <div className="mt-2 pt-2 border-t border-neutral-150 text-[10px] text-green-700 font-medium flex items-center gap-1">
+                            ✓ Payout Terms accepted {op.agreementAcceptedAt ? `on ${new Date(op.agreementAcceptedAt).toLocaleDateString()}` : ''}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="mt-2 p-2.5 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-2 text-xs text-amber-800 font-medium">
                         <ShieldAlert className="h-4 w-4 text-amber-600" />
                         No bank details added
-                      </div>
-                    )}
-
-                    {/* Slovenian ID Card details */}
-                    {op.slovenianId ? (
-                      <div className="mt-2 p-3 bg-cyan-50/50 rounded-xl border border-cyan-100">
-                        <p className="text-xs font-bold text-cyan-900 flex items-center gap-1.5 mb-2">
-                          🇸🇮 Osebna Izkaznica Verified
-                        </p>
-                        <div className="text-[11px] text-cyan-800 grid grid-cols-2 gap-x-2 gap-y-1">
-                          <div><span className="text-neutral-500 font-medium">Serial:</span> <span className="font-mono font-bold">{op.slovenianId.serialNumber}</span></div>
-                          <div><span className="text-neutral-500 font-medium">EMŠO:</span> <span className="font-mono font-bold">{op.slovenianId.emso}</span></div>
-                          <div><span className="text-neutral-500 font-medium">Issued:</span> {op.slovenianId.issueDate}</div>
-                          <div><span className="text-neutral-500 font-medium">Expiry:</span> {op.slovenianId.expiryDate}</div>
-                        </div>
-                        {op.agreementAccepted && (
-                          <div className="mt-2 pt-2 border-t border-cyan-100 text-[10px] text-green-700 font-medium flex items-center gap-1">
-                            ✓ Agreement accepted {op.agreementAcceptedAt ? `on ${new Date(op.agreementAcceptedAt).toLocaleDateString()}` : ''}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-2.5 bg-amber-50 border border-amber-100 rounded-xl flex items-center gap-2 text-xs text-amber-800 font-medium">
-                        <ShieldAlert className="h-4 w-4 text-amber-600" />
-                        Identity Card not verified
                       </div>
                     )}
                   </div>

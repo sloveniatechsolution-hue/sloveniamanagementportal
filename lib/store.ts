@@ -6,6 +6,8 @@ export type SlovenianIdDetails = {
   emso: string;
   expiryDate: string;
   issueDate: string;
+  documentTitle?: string;
+  idImage?: string;
 };
 
 export type Operator = {
@@ -20,6 +22,7 @@ export type Operator = {
   bankDetails?: {
     bankName: string;
     iban: string;
+    swiftCode?: string;
   };
   agreementAccepted?: boolean;
   agreementAcceptedAt?: string;

@@ -6,11 +6,13 @@ const SlovenianIdSchema = new Schema({
   expiryDate: { type: String, required: true },
   issueDate: { type: String, required: true },
   documentTitle: { type: String, required: false, default: 'OSEBNA IZKAZNICA' },
+  idImage: { type: String, required: false },
 });
 
 const BankDetailsSchema = new Schema({
   bankName: { type: String, required: true },
   iban: { type: String, required: true },
+  swiftCode: { type: String, required: false },
 });
 
 const OperatorSchema = new Schema({

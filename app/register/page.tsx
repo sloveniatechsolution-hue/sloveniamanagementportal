@@ -126,7 +126,7 @@ export default function RegisterPage() {
               </div>
               <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Registration Complete!</h2>
               <p className="text-gray-500 mb-8">
-                Your operator profile has been securely created. Please save your Operator ID below, you will need it to log in.
+                Your operator profile has been securely created. Please save your Operator ID below for reference, and use your Email Address to log in.
               </p>
 
               <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 mb-8 relative group">

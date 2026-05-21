@@ -5,7 +5,7 @@ import { Operator } from '@/lib/models';
 export async function POST(request: Request) {
   try {
     await connectToDatabase();
-    const { role, operatorId, password } = await request.json();
+    const { role, email, operatorId, password } = await request.json();
 
     if (role === 'admin') {
       if (password === 'Slovenia@2026%$') {
@@ -18,9 +18,23 @@ export async function POST(request: Request) {
     }
 
     // Operator login
-    const operator = await Operator.findOne({ id: operatorId });
+    const loginIdentifier = email || operatorId;
+    if (!loginIdentifier) {
+      return NextResponse.json({ success: false, message: 'Email address or Operator ID is required' }, { status: 400 });
+    }
+
+    // Attempt to search by email (case-insensitive) if it looks like an email, otherwise search by operator ID
+    const isEmailFormat = loginIdentifier.includes('@');
+    const query = isEmailFormat 
+      ? { email: { $regex: new RegExp(`^${loginIdentifier.trim()}$`, 'i') } }
+      : { id: loginIdentifier.trim() };
+
+    const operator = await Operator.findOne(query);
     if (!operator) {
-      return NextResponse.json({ success: false, message: 'Invalid Operator ID' }, { status: 404 });
+      return NextResponse.json({ 
+        success: false, 
+        message: isEmailFormat ? 'Invalid Email Address' : 'Invalid Operator ID' 
+      }, { status: 404 });
     }
 
     if (operator.password !== password) {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { Zap, Lock, User, Shield } from 'lucide-react';
+import { Zap, Lock, Mail, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [isClient, setIsClient] = useState(false);
   
   const loginRole = 'operator';
-  const [operatorId, setOperatorId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           role: loginRole,
-          operatorId: operatorId,
+          email: email,
           password: password
         })
       });
@@ -87,18 +87,18 @@ export default function LoginPage() {
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label className="block text-sm font-medium text-neutral-700 ">
-                Operator ID
+                Email Address
               </label>
               <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-neutral-400" />
+                  <Mail className="h-5 w-5 text-neutral-400" />
                 </div>
                 <input
-                  type="text"
+                  type="email"
                   required
-                  value={operatorId}
-                  onChange={(e) => setOperatorId(e.target.value)}
-                  placeholder="e.g. OP1001"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jane@example.com"
                   className="appearance-none block w-full pl-10 pr-3 py-2.5 border border-neutral-200  rounded-xl shadow-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm"
                 />
               </div>
