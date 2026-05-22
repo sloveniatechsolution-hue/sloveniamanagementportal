@@ -11,8 +11,12 @@ const SlovenianIdSchema = new Schema({
 
 const BankDetailsSchema = new Schema({
   bankName: { type: String, required: true },
-  iban: { type: String, required: true },
+  iban: { type: String, required: false },
   swiftCode: { type: String, required: false },
+  country: { type: String, required: true, default: 'Slovenia' },
+  accountNumber: { type: String, required: false },
+  branchName: { type: String, required: false },
+  routingNumber: { type: String, required: false },
 });
 
 const OperatorSchema = new Schema({

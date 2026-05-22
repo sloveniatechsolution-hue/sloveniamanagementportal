@@ -136,12 +136,19 @@ export default function OperatorsPage() {
                           <h3 className="text-lg font-semibold text-neutral-900">{op.name}</h3>
                           <span className="text-xs text-neutral-400 font-mono">#{op.id}</span>
                         </div>
-                        <span className={cn(
-                          "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1",
-                          op.status === 'Active' ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-700"
-                        )}>
-                          {op.status}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                          <span className={cn(
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                            op.status === 'Active' ? "bg-emerald-50 text-emerald-700" : "bg-neutral-100 text-neutral-700"
+                          )}>
+                            {op.status}
+                          </span>
+                          {op.shift && (
+                            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 border border-indigo-100">
+                              {op.shift} Shift
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -170,19 +177,46 @@ export default function OperatorsPage() {
                     {/* Bank Details section */}
                     {op.bankDetails ? (
                       <div className="mt-2 p-3 bg-neutral-50 rounded-xl border border-neutral-100 space-y-1">
-                        <p className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 mb-1">
-                          🏦 {op.bankDetails.bankName}
-                        </p>
-                        <p className="text-xs text-neutral-600 font-mono">
-                          <span className="text-neutral-400 font-sans font-medium text-[10px]">IBAN:</span> {op.bankDetails.iban}
-                        </p>
+                        <div className="flex items-center justify-between gap-2 mb-1.5 border-b border-neutral-100 pb-1.5">
+                          <p className="text-xs font-bold text-neutral-800 flex items-center gap-1 truncate">
+                            🏦 {op.bankDetails.bankName}
+                          </p>
+                          {(() => {
+                            const c = op.bankDetails.country || 'Slovenia';
+                            if (c === 'Nepal') return <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-100">🇳🇵 Nepal</span>;
+                            if (c === 'Bangladesh') return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-100">🇧🇩 Bangladesh</span>;
+                            return <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-100">🇸🇮 Slovenia</span>;
+                          })()}
+                        </div>
+
+                        {(op.bankDetails.country || 'Slovenia') === 'Slovenia' ? (
+                          <p className="text-xs text-neutral-600 font-mono truncate">
+                            <span className="text-neutral-400 font-sans font-medium text-[10px] uppercase">IBAN:</span> {op.bankDetails.iban}
+                          </p>
+                        ) : (
+                          <>
+                            <p className="text-xs text-neutral-600 font-mono truncate">
+                              <span className="text-neutral-400 font-sans font-medium text-[10px] uppercase">Acc No:</span> {op.bankDetails.accountNumber}
+                            </p>
+                            <p className="text-xs text-neutral-600 truncate">
+                              <span className="text-neutral-400 font-sans font-medium text-[10px] uppercase">Branch:</span> {op.bankDetails.branchName}
+                            </p>
+                            {op.bankDetails.country === 'Bangladesh' && op.bankDetails.routingNumber && (
+                              <p className="text-xs text-neutral-600 font-mono truncate">
+                                <span className="text-neutral-400 font-sans font-medium text-[10px] uppercase">Routing:</span> {op.bankDetails.routingNumber}
+                              </p>
+                            )}
+                          </>
+                        )}
+
                         {op.bankDetails.swiftCode && (
-                          <p className="text-xs text-neutral-600 font-mono">
-                            <span className="text-neutral-400 font-sans font-medium text-[10px]">SWIFT/BIC:</span> {op.bankDetails.swiftCode}
+                          <p className="text-xs text-neutral-600 font-mono truncate">
+                            <span className="text-neutral-400 font-sans font-medium text-[10px] uppercase">SWIFT/BIC:</span> {op.bankDetails.swiftCode}
                           </p>
                         )}
+
                         {op.agreementAccepted && (
-                          <div className="mt-2 pt-2 border-t border-neutral-150 text-[10px] text-green-700 font-medium flex items-center gap-1">
+                          <div className="mt-2 pt-2 border-t border-neutral-100 text-[10px] text-green-700 font-semibold flex items-center gap-1">
                             ✓ Payout Terms accepted {op.agreementAcceptedAt ? `on ${new Date(op.agreementAcceptedAt).toLocaleDateString()}` : ''}
                           </div>
                         )}

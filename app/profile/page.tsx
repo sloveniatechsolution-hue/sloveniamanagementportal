@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
-import { Building2, CreditCard, Save, FileText, CheckCircle2, ShieldCheck, HelpCircle, ArrowRight, Trash2, UploadCloud, Sparkles, RefreshCw, AlertCircle, Lock } from 'lucide-react';
+import { Building2, Save, CheckCircle2, ShieldCheck, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
@@ -10,9 +10,13 @@ export default function ProfilePage() {
   const { currentUser, operators } = useStore();
   const router = useRouter();
 
+  const [country, setCountry] = useState('Slovenia');
   const [bankName, setBankName] = useState('');
   const [iban, setIban] = useState('');
   const [swiftCode, setSwiftCode] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [branchName, setBranchName] = useState('');
+  const [routingNumber, setRoutingNumber] = useState('');
   
   // Agreement Acceptance
   const [agreementAccepted, setAgreementAccepted] = useState(false);
@@ -27,9 +31,13 @@ export default function ProfilePage() {
       const operator = operators.find(op => op.id === currentUser.id);
       if (operator) {
         if (operator.bankDetails) {
+          setCountry(operator.bankDetails.country || 'Slovenia');
           setBankName(operator.bankDetails.bankName || '');
           setIban(operator.bankDetails.iban || '');
           setSwiftCode(operator.bankDetails.swiftCode || '');
+          setAccountNumber(operator.bankDetails.accountNumber || '');
+          setBranchName(operator.bankDetails.branchName || '');
+          setRoutingNumber(operator.bankDetails.routingNumber || '');
         }
         if (operator.agreementAccepted) {
           setAgreementAccepted(operator.agreementAccepted);
@@ -59,15 +67,47 @@ export default function ProfilePage() {
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!bankName || !iban || !swiftCode) {
-      toast.error('Please fill out all bank credentials including SWIFT/BIC code');
+    if (!bankName) {
+      toast.error('Please enter the Bank Name.');
+      return;
+    }
+    if (!swiftCode) {
+      toast.error('Please enter the SWIFT/BIC code.');
+      return;
+    }
+    if (swiftCode.length !== 8 && swiftCode.length !== 11) {
+      toast.error('SWIFT/BIC code must be 8 or 11 characters long.');
       return;
     }
 
-    // Basic IBAN validation - Slovenia starts with SI56
-    if (!iban.startsWith('SI56') || iban.length < 15) {
-      toast.error('Please enter a valid Slovenian IBAN format (starts with SI56 followed by numbers).');
-      return;
+    if (country === 'Slovenia') {
+      if (!iban) {
+        toast.error('Please enter the IBAN.');
+        return;
+      }
+      if (!iban.startsWith('SI56') || iban.length < 15) {
+        toast.error('Please enter a valid Slovenian IBAN format (starts with SI56).');
+        return;
+      }
+    } else {
+      if (!accountNumber) {
+        toast.error('Please enter the Bank Account Number.');
+        return;
+      }
+      if (!branchName) {
+        toast.error('Please enter the Branch Name.');
+        return;
+      }
+      if (country === 'Bangladesh') {
+        if (!routingNumber) {
+          toast.error('Please enter the 9-digit Routing Number.');
+          return;
+        }
+        if (!/^\d{9}$/.test(routingNumber)) {
+          toast.error('Routing Number must be exactly 9 digits.');
+          return;
+        }
+      }
     }
 
     if (!shift) {
@@ -87,7 +127,15 @@ export default function ProfilePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           operatorId: currentUser.id,
-          bankDetails: { bankName, iban, swiftCode },
+          bankDetails: {
+            country,
+            bankName,
+            iban: country === 'Slovenia' ? iban : undefined,
+            swiftCode,
+            accountNumber: country !== 'Slovenia' ? accountNumber : undefined,
+            branchName: country !== 'Slovenia' ? branchName : undefined,
+            routingNumber: country === 'Bangladesh' ? routingNumber : undefined,
+          },
           agreementAccepted,
           shift
         })
@@ -111,12 +159,57 @@ export default function ProfilePage() {
     }
   };
 
+  // Card styles mapping based on country
+  const getCardStyle = () => {
+    switch (country) {
+      case 'Nepal':
+        return {
+          bgClass: "from-[#881337] via-[#9f1239] to-[#be123c]", // Crimson/Rose gradient
+          radial: `
+            radial-gradient(circle at 10% 20%, rgba(30, 58, 138, 0.25) 0%, transparent 60%),
+            radial-gradient(circle at 90% 80%, rgba(220, 38, 38, 0.2) 0%, transparent 50%)
+          `,
+          tag: "Nepal Payout Verified",
+          tagColor: "text-rose-200"
+        };
+      case 'Bangladesh':
+        return {
+          bgClass: "from-[#064e3b] via-[#065f46] to-[#047857]", // Emerald/Green gradient
+          radial: `
+            radial-gradient(circle at 10% 20%, rgba(220, 38, 38, 0.25) 0%, transparent 60%),
+            radial-gradient(circle at 90% 80%, rgba(234, 179, 8, 0.2) 0%, transparent 50%)
+          `,
+          tag: "Bangladesh Payout Verified",
+          tagColor: "text-emerald-200"
+        };
+      case 'Slovenia':
+      default:
+        return {
+          bgClass: "from-[#1e293b] via-[#334155] to-[#475569]", // Slate gradient
+          radial: `
+            radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 50%)
+          `,
+          tag: "SEPA Payout Verified",
+          tagColor: "text-emerald-400"
+        };
+    }
+  };
+
+  const cardStyle = getCardStyle();
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-neutral-900 tracking-tight">Payroll & Bank Account Verification</h1>
         <p className="mt-2 text-sm text-neutral-500 max-w-2xl">
-          Please verify your banking credentials to receive salary payouts. Payments are processed from India directly to Slovenia in Euros (EUR) via international SEPA wire transfers from our corporate foreign exchange accounts.
+          {country === 'Slovenia' ? (
+            "Please verify your banking credentials to receive salary payouts. Payments are processed from India directly to Slovenia in Euros (EUR) via international SEPA wire transfers from our corporate foreign exchange accounts."
+          ) : country === 'Nepal' ? (
+            "Please verify your home country bank account in Nepal to receive salary payouts. Payouts are routed via direct international bank remittance in Nepalese Rupees (NPR) directly to your local bank account."
+          ) : (
+            "Please verify your home country bank account in Bangladesh to receive salary payouts. Payouts are routed via direct electronic bank remittance in Bangladeshi Taka (BDT) directly to your local bank account."
+          )}
         </p>
       </div>
 
@@ -131,19 +224,20 @@ export default function ProfilePage() {
               <span className="text-xs text-neutral-400 font-bold uppercase tracking-widest mb-3">Linked Payroll Card Preview</span>
               
               <div 
-                className="w-full max-w-[400px] aspect-[1.586/1] bg-gradient-to-tr from-[#1e293b] via-[#334155] to-[#475569] rounded-2xl border border-neutral-700 shadow-2xl relative overflow-hidden flex flex-col justify-between p-6 select-none text-white"
+                className={`w-full max-w-[400px] aspect-[1.586/1] bg-gradient-to-tr ${cardStyle.bgClass} rounded-2xl border border-neutral-700 shadow-2xl relative overflow-hidden flex flex-col justify-between p-6 select-none text-white`}
                 style={{
-                  backgroundImage: `
-                    radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                    radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 50%)
-                  `
+                  backgroundImage: cardStyle.radial
                 }}
               >
                 {/* Chip and Contactless indicator */}
                 <div className="flex justify-between items-start">
                   <div className="flex flex-col">
-                    <span className="text-[10px] text-neutral-400 font-bold tracking-widest uppercase">SALARY DEPOSIT CARD</span>
-                    <span className="text-sm font-semibold tracking-wide text-emerald-400 mt-0.5">SEPA Payout Verified</span>
+                    <span className="text-[10px] text-neutral-300 font-bold tracking-widest uppercase">
+                      {country === 'Slovenia' ? 'SALARY DEPOSIT CARD' : `${country.toUpperCase()} SALARY ROUTING`}
+                    </span>
+                    <span className={`text-xs font-bold tracking-wide mt-0.5 ${cardStyle.tagColor}`}>
+                      {cardStyle.tag}
+                    </span>
                   </div>
                   {/* Gold Chip */}
                   <div className="w-10 h-7 bg-[#e5c158] border border-amber-600 rounded-md relative shadow-sm flex items-center justify-center overflow-hidden">
@@ -154,22 +248,37 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* IBAN Display */}
+                {/* Account Number / IBAN Display */}
                 <div>
-                  <span className="text-[9px] text-neutral-400 block tracking-widest uppercase mb-1">IBAN Account Number</span>
-                  <span className="text-base font-bold font-mono tracking-widest block text-neutral-100">
-                    {iban ? iban.replace(/(.{4})/g, '$1 ').trim() : 'SI56 •••• •••• •••• •••'}
+                  <span className="text-[9px] text-neutral-300 block tracking-widest uppercase mb-1">
+                    {country === 'Slovenia' ? 'IBAN Account Number' : 'Bank Account Number'}
                   </span>
+                  <span className="text-sm sm:text-base font-bold font-mono tracking-widest block text-neutral-100 truncate">
+                    {country === 'Slovenia' 
+                      ? (iban ? iban.replace(/(.{4})/g, '$1 ').trim() : 'SI56 •••• •••• •••• •••')
+                      : (accountNumber ? accountNumber.replace(/(.{4})/g, '$1 ').trim() : '•••• •••• •••• ••••')
+                    }
+                  </span>
+                  {country !== 'Slovenia' && branchName && (
+                    <span className="text-[9px] text-neutral-300 font-medium block mt-1 truncate">
+                      Branch: {branchName}
+                    </span>
+                  )}
+                  {country === 'Bangladesh' && routingNumber && (
+                    <span className="text-[9px] text-neutral-300 font-medium block mt-0.5 font-mono">
+                      Routing: {routingNumber}
+                    </span>
+                  )}
                 </div>
 
                 {/* Holder Name & Bank Name */}
                 <div className="flex justify-between items-end border-t border-neutral-700/50 pt-3">
                   <div className="flex flex-col max-w-[60%]">
-                    <span className="text-[8px] text-neutral-400 uppercase tracking-wider block">Operator / Holder</span>
+                    <span className="text-[8px] text-neutral-300 uppercase tracking-wider block">Operator / Holder</span>
                     <span className="text-xs font-semibold uppercase tracking-wide truncate">{currentUser.name || 'Jana Vzorec'}</span>
                   </div>
                   <div className="flex flex-col items-end max-w-[40%] text-right">
-                    <span className="text-[8px] text-neutral-400 uppercase tracking-wider block">SWIFT/BIC Code</span>
+                    <span className="text-[8px] text-neutral-300 uppercase tracking-wider block">SWIFT/BIC Code</span>
                     <span className="text-xs font-bold font-mono tracking-wider text-neutral-200">{swiftCode || '••••••••'}</span>
                   </div>
                 </div>
@@ -180,24 +289,43 @@ export default function ProfilePage() {
             <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm space-y-4">
               <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                Direct-in-Euro Transfer Setup
+                Direct Transfer Setup
               </h3>
               <p className="text-sm text-neutral-600 leading-relaxed">
-                Our parent company in India processes international payments directly to Slovenia via specialized foreign exchange capital accounts.
+                Our parent company in India processes international payments directly.
               </p>
               <div className="text-xs text-neutral-500 space-y-2 border-t border-neutral-100 pt-3">
-                <div className="flex gap-2">
-                  <span className="font-bold text-neutral-700">1. No Conversion Fees:</span>
-                  <span>Transfers originate from India using our pre-converted Euro (EUR) accounts. You receive your full salary in Euros directly in Slovenia without any currency conversion friction or fees.</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="font-bold text-neutral-700">2. SWIFT/BIC Routing:</span>
-                  <span>We require a valid SWIFT/BIC code to successfully route direct payments from our international exchange.</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="font-bold text-neutral-700">3. Speed & Security:</span>
-                  <span>Payments are processed with secure end-to-end tracing and arrive directly into your local Slovenian checking account.</span>
-                </div>
+                {country === 'Slovenia' ? (
+                  <>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-neutral-700">1. No Conversion Fees:</span>
+                      <span>Transfers originate from India using our pre-converted Euro (EUR) accounts. You receive your full salary in Euros directly in Slovenia without any currency conversion friction or fees.</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-neutral-700">2. SWIFT/BIC Routing:</span>
+                      <span>We require a valid SWIFT/BIC code to successfully route direct payments from our international exchange.</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-neutral-700">3. Speed & Security:</span>
+                      <span>Payments are processed with secure end-to-end tracing and arrive directly into your local Slovenian checking account.</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-neutral-700">1. Home Country Deposit:</span>
+                      <span>Transfers are processed as direct international inward remittances from our corporate accounts and converted into your local currency ({country === 'Nepal' ? 'NPR' : 'BDT'}) at standard bank forex rates.</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-neutral-700">2. SWIFT & Routing:</span>
+                      <span>We require a valid SWIFT code (and 9-digit Routing Number for Bangladesh) to execute international bank routing to local branches.</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-bold text-neutral-700">3. Processing Time:</span>
+                      <span>Remittances are processed within 2-3 business days and arrive directly into your bank account in {country === 'Nepal' ? 'Nepal' : 'Bangladesh'}.</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             
@@ -216,12 +344,33 @@ export default function ProfilePage() {
                   Bank Account Credentials
                 </h2>
                 <p className="text-xs text-neutral-500 mt-1">
-                  Provide your local Slovenian bank details and international BIC/SWIFT code for direct wire transfers.
+                  Provide your bank details and international BIC/SWIFT code for direct wire transfers.
                 </p>
               </div>
 
               <div className="p-6 space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Country selector */}
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Payout Country / Destination Bank</label>
+                  <div className="relative">
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 sm:text-sm transition-all appearance-none"
+                    >
+                      <option value="Slovenia">🇸🇮 Slovenia (SEPA / EUR)</option>
+                      <option value="Nepal">🇳🇵 Nepal (Local Deposit / NPR)</option>
+                      <option value="Bangladesh">🇧🇩 Bangladesh (Local Deposit / BDT)</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-neutral-500">
+                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4 border-t border-neutral-100">
                   <div>
                     <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Bank Name</label>
                     <input 
@@ -229,24 +378,83 @@ export default function ProfilePage() {
                       type="text" 
                       value={bankName} 
                       onChange={(e) => setBankName(e.target.value)}
-                      placeholder="e.g. Nova Ljubljanska Banka d.d. (NLB)" 
+                      placeholder={
+                        country === 'Slovenia' ? 'e.g. Nova Ljubljanska Banka d.d. (NLB)' :
+                        country === 'Nepal' ? 'e.g. Nabil Bank Limited' : 'e.g. Sonali Bank PLC'
+                      } 
                       className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 placeholder-neutral-400 sm:text-sm transition-all"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-neutral-700 mb-1.5">IBAN Account Number</label>
-                    <input 
-                      required 
-                      type="text" 
-                      value={iban} 
-                      onChange={(e) => setIban(e.target.value.toUpperCase().replace(/\s/g, ''))}
-                      placeholder="SI56 •••• •••• •••• •••" 
-                      className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 placeholder-neutral-400 sm:text-sm font-mono transition-all"
-                    />
-                    <p className="text-[10px] text-neutral-400 mt-1">Slovenian IBANs start with 'SI56'.</p>
-                  </div>
+                  {country === 'Slovenia' ? (
+                    <div>
+                      <label className="block text-sm font-semibold text-neutral-700 mb-1.5">IBAN Account Number</label>
+                      <input 
+                        required 
+                        type="text" 
+                        value={iban} 
+                        onChange={(e) => setIban(e.target.value.toUpperCase().replace(/\s/g, ''))}
+                        placeholder="SI56 •••• •••• •••• •••" 
+                        className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 placeholder-neutral-400 sm:text-sm font-mono transition-all"
+                      />
+                      <p className="text-[10px] text-neutral-400 mt-1">Slovenian IBANs start with 'SI56'.</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Account Number</label>
+                      <input 
+                        required 
+                        type="text" 
+                        value={accountNumber} 
+                        onChange={(e) => setAccountNumber(e.target.value.replace(/\s/g, ''))}
+                        placeholder="e.g. 1048294729104" 
+                        className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 placeholder-neutral-400 sm:text-sm font-mono transition-all"
+                      />
+                      <p className="text-[10px] text-neutral-400 mt-1">Local bank account number in destination country.</p>
+                    </div>
+                  )}
                 </div>
+
+                {country !== 'Slovenia' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-neutral-100 pt-5">
+                    <div>
+                      <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Branch Name / Address</label>
+                      <input 
+                        required 
+                        type="text" 
+                        value={branchName} 
+                        onChange={(e) => setBranchName(e.target.value)}
+                        placeholder="e.g. New Road Branch" 
+                        className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 placeholder-neutral-400 sm:text-sm transition-all"
+                      />
+                    </div>
+                    {country === 'Bangladesh' ? (
+                      <div>
+                        <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Routing Number (9 Digits)</label>
+                        <input 
+                          required 
+                          type="text" 
+                          value={routingNumber} 
+                          onChange={(e) => setRoutingNumber(e.target.value.replace(/\D/g, ''))}
+                          placeholder="e.g. 015261948" 
+                          maxLength={9}
+                          className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 placeholder-neutral-400 sm:text-sm font-mono transition-all"
+                        />
+                        <p className="text-[10px] text-neutral-400 mt-1">Required 9-digit routing code for Bangladesh.</p>
+                      </div>
+                    ) : (
+                      <div className="opacity-50 select-none">
+                        <label className="block text-sm font-semibold text-neutral-700 mb-1.5">Routing Code (Optional)</label>
+                        <input 
+                          type="text" 
+                          disabled
+                          placeholder="Not required for Nepal" 
+                          className="block w-full px-4 py-2.5 bg-neutral-100 border border-neutral-200 rounded-xl cursor-not-allowed text-neutral-400 sm:text-sm font-mono transition-all"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 border-t border-neutral-100 pt-5">
                   <div>
@@ -256,11 +464,11 @@ export default function ProfilePage() {
                       type="text" 
                       value={swiftCode} 
                       onChange={(e) => setSwiftCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
-                      placeholder="e.g. LJUBSI2X" 
+                      placeholder={country === 'Slovenia' ? 'e.g. LJUBSI2X' : 'e.g. NABINPKA'} 
                       maxLength={11}
                       className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:bg-white text-neutral-900 placeholder-neutral-400 sm:text-sm font-mono transition-all"
                     />
-                    <p className="text-[10px] text-neutral-400 mt-1">Required for direct international wire payments from India in Euros.</p>
+                    <p className="text-[10px] text-neutral-400 mt-1">Required for international bank transfer routing.</p>
                   </div>
 
                   <div>
@@ -308,7 +516,7 @@ export default function ProfilePage() {
               <div className="border-b border-neutral-100 p-6 bg-neutral-50">
                 <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
                   <ShieldCheck className="h-5 w-5 text-blue-600" />
-                  SEPA Payroll Consent & Terms
+                  Payroll Consent & Terms
                 </h2>
                 <p className="text-xs text-neutral-500 mt-1">
                   Please read and accept the terms of bank data processing.
@@ -321,16 +529,16 @@ export default function ProfilePage() {
                     PAYROLL Payout & BANK DATA PROCESSING AGREEMENT
                   </p>
                   <p>
-                    By checking the box below, you explicitly acknowledge and agree that you have entered your authentic and correct bank routing details, including IBAN and SWIFT/BIC codes.
+                    By checking the box below, you explicitly acknowledge and agree that you have entered your authentic and correct bank routing details, including IBAN, Account Numbers, SWIFT/BIC, and Routing codes as applicable for your destination country.
                   </p>
                   <p>
-                    <strong>1. Payout Processing:</strong> Payouts are processed from India to Slovenia via international foreign exchange direct bank-to-bank wire transfers. The funds are pre-converted on our end, meaning you will receive the exact salary in Euros (EUR) directly in your Slovenian bank account with no conversion required.
+                    <strong>1. Payout Processing:</strong> Payouts are processed from India. For Slovenia, payments are routed via international foreign exchange direct bank-to-bank wire transfers in Euros (EUR) to your Slovenian bank account. For Nepal and Bangladesh, funds are routed via international remittance bank transfers and paid out in local currencies (NPR for Nepal, BDT for Bangladesh) directly to your home country bank account.
                   </p>
                   <p>
                     <strong>2. Security & Encryption:</strong> We adhere strictly to EU GDPR mandates. Your bank credentials will remain encrypted in transit and at rest, and will not be shared with outside entities except for standard tax reporting and payroll bank routing agencies.
                   </p>
                   <p>
-                    <strong>3. Error Correction:</strong> It is your responsibility to maintain accurate IBAN and SWIFT details. Failure to supply correct details will delay wire routing.
+                    <strong>3. Error Correction:</strong> It is your responsibility to maintain accurate bank account, IBAN, and SWIFT details. Failure to supply correct details will delay routing.
                   </p>
                   <p>
                     <strong>4. Confidentiality & Non-Disclosure:</strong> You explicitly agree to maintain absolute confidentiality regarding all company resources, software code, portal access, operational data, assembly guidelines, and trade secrets. Disclosing, sharing, or revealing any proprietary company information to outside entities or third parties is strictly prohibited and will result in immediate termination and legal action.

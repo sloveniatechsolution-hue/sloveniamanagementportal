@@ -20,9 +20,13 @@ export type Operator = {
   password?: string; // Operator login password
   slovenianId?: SlovenianIdDetails; // Slovenian National ID details
   bankDetails?: {
+    country: string;
     bankName: string;
-    iban: string;
-    swiftCode?: string;
+    iban?: string;
+    swiftCode: string;
+    accountNumber?: string;
+    branchName?: string;
+    routingNumber?: string;
   };
   agreementAccepted?: boolean;
   agreementAcceptedAt?: string;

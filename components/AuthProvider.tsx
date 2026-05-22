@@ -34,11 +34,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (currentUser?.role === 'operator') {
       const operator = operators.find(op => op.id === currentUser.id);
       if (operator) {
+        const bankDetails = operator.bankDetails;
+        let isBankDetailsComplete = false;
+        if (bankDetails && bankDetails.bankName) {
+          const country = bankDetails.country || 'Slovenia';
+          if (country === 'Slovenia') {
+            isBankDetailsComplete = !!(bankDetails.iban && bankDetails.swiftCode);
+          } else if (country === 'Nepal') {
+            isBankDetailsComplete = !!(bankDetails.accountNumber && bankDetails.swiftCode && bankDetails.branchName);
+          } else if (country === 'Bangladesh') {
+            isBankDetailsComplete = !!(bankDetails.accountNumber && bankDetails.swiftCode && bankDetails.branchName && bankDetails.routingNumber);
+          }
+        }
+
         const missingDetails = 
-          !operator.bankDetails || 
-          !operator.bankDetails.bankName ||
-          !operator.bankDetails.iban ||
-          !operator.bankDetails.swiftCode ||
+          !isBankDetailsComplete || 
           !operator.agreementAccepted ||
           !operator.shift;
         
