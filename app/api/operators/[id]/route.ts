@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
-import { Operator } from '@/lib/models';
+import { Operator, Attendance, Payment } from '@/lib/models';
 
 type RouteParams = {
   params: Promise<{ id: string }>
@@ -38,7 +38,13 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return NextResponse.json({ success: false, message: 'Operator not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, message: 'Operator deleted successfully' });
+    // Delete related attendance records
+    await Attendance.deleteMany({ operatorId: id });
+
+    // Delete related payments
+    await Payment.deleteMany({ operatorId: id });
+
+    return NextResponse.json({ success: true, message: 'Operator and associated records deleted successfully' });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }
